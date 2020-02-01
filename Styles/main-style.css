@@ -1,0 +1,22 @@
+body{overflow-x: hidden}
+
+#map {
+    min-height: 450px;
+    background-color: lightskyblue;
+}
+
+#gender-chart {
+    min-height: 200px;
+    background-color: orange;
+}
+
+#ethnicity-chart{
+    min-height: 200px;
+    background-color: powderblue;
+}
+
+.vertical-align-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
