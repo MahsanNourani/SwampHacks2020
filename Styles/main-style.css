@@ -1,13 +1,13 @@
 body{overflow-x: hidden}
 
 #map {
-    min-height: 450px;
+    height:400px;
     background-color: #edf8ff;
 }
 
 #gender-chart {
-    min-height: 200px;
-    background-color: orange;
+    height:400px;
+    background-color: #edf8ff;
 }
 
 .powderblue {
@@ -43,10 +43,23 @@ div.tooltip {
     max-width: 80px;
     min-height: 25px;
     padding: 2px;
-    font: 12px sans-serif;
+    font: 16px sans-serif;
     background: black;
     color: #edf8ff;
     border: 0px;
     border-radius: 4px;
     pointer-events: none;
+}
+
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 15px;
 }
