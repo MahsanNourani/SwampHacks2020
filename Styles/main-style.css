@@ -10,9 +10,12 @@ body{overflow-x: hidden}
     background-color: orange;
 }
 
+.powderblue {
+    background-color: powderblue;
+}
 #ethnicity-chart{
     min-height: 200px;
-    background-color: powderblue;
+    
 }
 
 .vertical-align-center {
@@ -20,12 +23,6 @@ body{overflow-x: hidden}
     align-items: center;
     justify-content: center;
 }
-
-/*.make-it-red {*/
-    /*fill: red;*/
-    /*stroke: yellow;*/
-    /*stroke-width: 2px;*/
-/*}*/
 
 .states {
     fill:   #7692FF;
