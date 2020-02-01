@@ -2,7 +2,7 @@ body{overflow-x: hidden}
 
 #map {
     min-height: 450px;
-    background-color: lightskyblue;
+    background-color: #edf8ff;
 }
 
 #gender-chart {
@@ -19,4 +19,37 @@ body{overflow-x: hidden}
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/*.make-it-red {*/
+    /*fill: red;*/
+    /*stroke: yellow;*/
+    /*stroke-width: 2px;*/
+/*}*/
+
+.states {
+    fill:   #7692FF;
+    stroke: #091540;
+    stroke-linejoin: round;
+}
+
+path:hover {
+    fill-opacity: .7;
+    fill: #091540;
+}
+
+/* Style for Custom Tooltip */
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    /*min-width: 15px;*/
+    max-width: 80px;
+    min-height: 25px;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: black;
+    color: #edf8ff;
+    border: 0px;
+    border-radius: 4px;
+    pointer-events: none;
 }
