@@ -10,12 +10,12 @@ body{overflow-x: hidden}
     background-color: #edf8ff;
 }
 
-.powderblue {
+/* .powderblue {
     background-color: powderblue;
-}
+} */
 #ethnicity-chart{
     min-height: 200px;
-    
+    background-color: #edf8ff;
 }
 
 .vertical-align-center {
@@ -26,6 +26,12 @@ body{overflow-x: hidden}
 
 .states {
     fill:   #7692FF;
+    stroke: #091540;
+    stroke-linejoin: round;
+}
+
+.selectedState {
+    fill:   rgb(49, 21, 75);
     stroke: #091540;
     stroke-linejoin: round;
 }
