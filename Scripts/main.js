@@ -3,4 +3,6 @@
     var projection = d3.geo.albersUsa()
         .translate([700, 230])
         .scale([500]);
+    var path = d3.geo.path()
+        .projection(projection);
 })();
