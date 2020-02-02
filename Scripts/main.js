@@ -12,71 +12,90 @@ CURRENT_STATE = "Texas";
 
 function startTask() {
 
-  // MAP
-  var map = d3.select("#map");
-  var width = 800,
-	height = 450;
+    // MAP
+    var map = d3.select("#map");
+    var width = 800,
+        height = 450;
 
-  // Tooltip Div
-  var div = d3.select("body")
-	.append("div")
-	.attr("class", "tooltip")
-	.style("opacity", 0);
+    // Tooltip Div
+    var div = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
 
 	var projection = d3.geo.albersUsa()
 		.scale(700)
 		.translate([width / 2.5, height / 2.7]);
 
 
-  var path = d3.geo.path()
-	.projection(projection);
+    var path = d3.geo.path()
+        .projection(projection);
 
 
-  var mapSvg = map.append("svg")
-	.attr("width", width)
-	.attr("height", height);
+    var mapSvg = map.append("svg")
+        .attr("width", width)
+        .attr("height", height);
 
 
-  queue()
-	.defer(d3.json, "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json")
-	.await(ready);
+    queue()
+        .defer(d3.json, "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json")
+        .await(ready);
 
-  function ready(error, us_geojson) {
-	var us = us_geojson;
+    function ready(error, us_geojson) {
+        var us = us_geojson;
 
-	mapSvg.append("g")
-	  .attr("class", "states").selectAll("path")
-	  .data(us.features).enter()
-	  .append("path")
-	  .attr("d", path)
-	  .on("mouseover", function (d) {
-		div.transition()
-		  .duration(200)
-		  .style("opacity", .9);
+        mapSvg.append("g")
+            .attr("class", "states").selectAll("path")
+            .data(us.features).enter()
+            .append("path")
+            .attr("d", path)
+            .on("mouseover", function (d) {
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
 
-		var totalEnrollement = findStateTotal(d.properties.name);
-		//read the csv file to find the total number of enrollments
+                var totalEnrollement = findStateTotal(d.properties.name);
+                //read the csv file to find the total number of enrollments
 
-				div.text(d.properties.name + "\n" + numberWithCommas(totalEnrollement))
-					.style("left", (d3.event.pageX + 30) + "px")
-					.style("top", (d3.event.pageY - 28) + "px");
-			})
-		.on("mouseout", function (d) {
-			div.transition()
-				.duration(500)
-				.style("opacity", 0);
-		});
+                div.text(d.properties.name + "\n" + numberWithCommas(totalEnrollement))
+                    .style("left", (d3.event.pageX + 30) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function (d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            })
+            .on("click", function (d) {
+                CURRENT_STATE = d.properties.name;
+                console.log(CURRENT_STATE);
+                removeOldCharts();
+                renderChartsAndLabels();
+                d3.select(this).classed("selectedState", true);
+            });
 
-
-
-	}
-	genderChart();
-	ethnicityChart("Total");
+    }
+    genderChart();
+    ethnicityChart();
 }
 
 
 
+function renderChartsAndLabels() {
+    ethnicityChart();
+    genderChart();
+    d3.select('#gender-title').html("Enrollment Distribution by Gender in " + CURRENT_STATE);
+    d3.select('#ethnicity-title').html("Enrollment Distribution by Ethnicity in " + CURRENT_STATE);
+}
+
+function removeOldCharts() {
+    d3.select('#ethnicity-chart').select('svg').remove();
+    d3.select('#gender-chart').select('svg').remove();
+    d3.select(".selectedState").classed("selectedState", false);
+}
+
 function genderChart() {
+
 	var width = 400, height = 300;
 	var data = findStateGender(CURRENT_STATE);
 	data = data.map(d => ({ ...d, count: Number(d.count)}));
