@@ -5,10 +5,14 @@ queue()
 		if (error)
 			console.log(error);
 		DATA.stateBasedData = data;
+		updateCharts();
 		startTask();
 	});
 CURRENT_YEAR = 2017;
-CURRENT_STATE = "Texas";
+CURRENT_STATE = "USA";
+
+// const activeCountries = [CURRENT_STATE];
+const activeCountries = ["USA"];
 
 function startTask() {
 
@@ -67,11 +71,14 @@ function startTask() {
                     .style("opacity", 0);
             })
             .on("click", function (d) {
+                // window.alert("ya");
                 CURRENT_STATE = d.properties.name;
                 console.log(CURRENT_STATE);
                 removeOldCharts();
                 renderChartsAndLabels();
-                d3.select(this).classed("selectedState", true);
+                // d3.select(this).classed("selectedState", true);
+                // if toggle button is true:
+                toggleCountry(this, d);
             });
 
     }
@@ -84,8 +91,14 @@ function startTask() {
 function renderChartsAndLabels() {
     ethnicityChart();
     genderChart();
-    d3.select('#gender-title').html("Enrollment Distribution by Gender in " + CURRENT_STATE);
-    d3.select('#ethnicity-title').html("Enrollment Distribution by Ethnicity in " + CURRENT_STATE);
+    if ($('#aggregate-toggle').is(':checked')) {
+        d3.select('#gender-title').html("Aggregated Enrollment Distribution by Gender for Selected States");
+        d3.select('#ethnicity-title').html("Aggregated Enrollment Distribution by Ethnicity for Selected States");
+    }
+    else {
+        d3.select('#gender-title').html("Enrollment Distribution by Gender in " + CURRENT_STATE);
+        d3.select('#ethnicity-title').html("Enrollment Distribution by Ethnicity in " + CURRENT_STATE);
+    }
 }
 
 function removeOldCharts() {
@@ -94,10 +107,50 @@ function removeOldCharts() {
     d3.select(".selectedState").classed("selectedState", false);
 }
 
+function toggleCountry(div, data) {
+    // add or remove data from active array
+    let countryName = data.properties.name;
+    let idx = activeCountries.indexOf(countryName);
+    if (idx == -1) {//If you click on a new state
+        var totalIdx = activeCountries.indexOf("USA");
+        if ( totalIdx >= 0) {
+            activeCountries.splice(totalIdx,1);
+        }
+        if ($('#aggregate-toggle').is(':checked')) {
+            activeCountries.push(countryName);
+            // mark country in geo map
+            div.classList.toggle("active");
+        }
+        else {
+            activeCountries.length = 0;
+            activeCountries.push(countryName);
+            d3.select("#map").selectAll(".active").classed("active", false);
+            div.classList.toggle("active");
+        }
+    }
+    else { //If you click an already selected state, it will be unselected.
+        activeCountries.splice(idx, 1);
+        div.classList.toggle("active");
+        if (activeCountries.length == 0) {
+            activeCountries.push("USA");
+            CURRENT_STATE = "USA";
+            renderChartsAndLabels();
+
+        }
+    }
+
+    updateCharts();
+}
+
+function updateCharts() {
+    genderChart();
+    ethnicityChart();
+}
+
 function genderChart() {
 
 	var width = 400, height = 300;
-	var data = findStateGender(CURRENT_STATE);
+	var data = findStateGender(activeCountries);
 	data = data.map(d => ({ ...d, count: Number(d.count)}));
 	var dataY = [];
 	dataY.push(data[0].count);
@@ -108,6 +161,8 @@ function genderChart() {
 	var color = ["#7692FF","#F3C98B"];
 
 	var gender = d3.select("#gender-chart");
+    gender.html(""); // clear last chart;
+
 	var genderSvg = gender.append("svg")
 		.classed("border rounded border-dark", true)
 		.attr("width", width)
@@ -193,18 +248,19 @@ function genderChart() {
 
 }
 
-function findStateGender(state) {
-	console.log(state);
-	var json = [];
-	for (var i = 0; i < DATA.stateBasedData.length; i++) {
-		if (DATA.stateBasedData[i].State == state) {
-			json.push({"gender": "Male", "count":DATA.stateBasedData[i].Male});
-			json.push({"gender": "Female", "count":DATA.stateBasedData[i].Female});
-			break;
-		}
-
-	}
-	return json;
+function findStateGender(stateArray) {
+    var json = [
+        { gender: "Male", count: 0 },
+        { gender: "Female", count: 0 }
+    ];
+    // sum all counts of active states
+    for (var i = 0; i < DATA.stateBasedData.length; i++) {
+        if (stateArray.includes(DATA.stateBasedData[i].State)) {
+            json[0].count += +DATA.stateBasedData[i].Male;
+            json[1].count += +DATA.stateBasedData[i].Female;
+        }
+    }
+    return json;
 }
 
 function findStateTotal(state) {
@@ -216,40 +272,54 @@ function findStateTotal(state) {
 }
 
 function getRaceOptions() {
-//race vars
-	var native; //American Indian or Alaska Native
-	var asianOrPI; // Asian or Pacific Islander
-	var asian; // Asian
-	var hawaiianOrPI; //Native Hawaiian or Other Pacific Islander
-	var black; //Black or African American
-	var hispanic; //Hispanic or Latino
-	var white; //White
-	var multiRacial; //Two or more races
-	var unknown; //Race/ethnicity unknown
-	var alien; //Nonresident alien
+    //race vars
+    var native = 0; //American Indian or Alaska Native
+    var asianOrPI = 0; // Asian or Pacific Islander
+    var asian = 0; // Asian
+    var hawaiianOrPI = 0; //Native Hawaiian or Other Pacific Islander
+    var black = 0; //Black or African American
+    var hispanic = 0; //Hispanic or Latino
+    var white = 0; //White
+    var multiRacial = 0; //Two or more races
+    var unknown = 0; //Race/ethnicity unknown
+    var alien = 0; //Nonresident alien
 
-	for (var i = 0; i < DATA.stateBasedData.length; i++) {
-		if (DATA.stateBasedData[i].State == CURRENT_STATE) {
-			native = DATA.stateBasedData[i]["American Indian or Alaska Native"];
-			asianOrPI = DATA.stateBasedData[i]["Asian or Pacific Islander"];
-			asian = DATA.stateBasedData[i].Asian
-			hawaiianOrPI = DATA.stateBasedData[i]["Native Hawaiian or Other Pacific Islander"];
-			black = DATA.stateBasedData[i]["Black or African American"];
-			hispanic = DATA.stateBasedData[i]["Hispanic or Latino"];
-			white = DATA.stateBasedData[i].White;
-			multiRacial = DATA.stateBasedData[i]["Two or more races"];
-			unknown = DATA.stateBasedData[i]["Race/ethnicity unknown"];
-			alien = DATA.stateBasedData[i]["Nonresident alien"];
-		}
-	}
-	var raceData = [native, asianOrPI, asian, hawaiianOrPI, black, hispanic, white, multiRacial, unknown, alien].map(Number);
-	return raceData;
+    for (var i = 0; i < DATA.stateBasedData.length; i++) {
+        if (activeCountries.includes(DATA.stateBasedData[i].State)) {
+            native += +DATA.stateBasedData[i]["American Indian or Alaska Native"];
+            asianOrPI += +DATA.stateBasedData[i]["Asian or Pacific Islander"];
+            asian += +DATA.stateBasedData[i].Asian;
+            hawaiianOrPI += +DATA.stateBasedData[i][
+                "Native Hawaiian or Other Pacific Islander"
+                ];
+            black += +DATA.stateBasedData[i]["Black or African American"];
+            hispanic += +DATA.stateBasedData[i]["Hispanic or Latino"];
+            white += +DATA.stateBasedData[i].White;
+            multiRacial += +DATA.stateBasedData[i]["Two or more races"];
+            unknown += +DATA.stateBasedData[i]["Race/ethnicity unknown"];
+            alien += +DATA.stateBasedData[i]["Nonresident alien"];
+        }
+    }
+    var raceData = [
+        native,
+        asianOrPI,
+        asian,
+        hawaiianOrPI,
+        black,
+        hispanic,
+        white,
+        multiRacial,
+        unknown,
+        alien
+    ].map(Number);
+    return raceData;
 }
 
 function ethnicityChart() {
   var ethnicityList = ["American Indian or Alaska Native", "Asian or Pacific Islander", "Asian", "Native Hawaiian or Other Pacific Islander",
 	  "Black or African American", "Hispanic or Latino", "White", "Two or more races", "Race/ethnicity unknown", "Nonresident alien"];
   var ethnicity = d3.select("#ethnicity-chart");
+  ethnicity.html(""); // clear old content
   // const rect = ethnicity.node().getBoundingClientRect();
 
   var width = 600;
@@ -283,6 +353,7 @@ function ethnicityChart() {
 
   var y_axis = d3.svg.axis()
 	.orient('left')
+    .ticks(5)
 	.tickFormat(d3.format("s"))
 	.scale(yScale);
 
@@ -298,6 +369,7 @@ function ethnicityChart() {
 
   ethnicitySVG.append("g")
 	  .attr('class','axis')
+      // .attr("dy", ".15em")
 	  .attr("transform", "translate(60, 37.5)")
 	  .call(y_axis);
 
@@ -322,7 +394,7 @@ function ethnicityChart() {
               .duration(200)
               .style("opacity", .9);
 
-          divToolTip.text(ethnicityList[i])
+          divToolTip.text(ethnicityList[i] + "\n" + numberWithCommas(d))
               .style("left", (d3.event.pageX + 30) + "px")
               .style("top", (d3.event.pageY - 28) + "px");
       })
@@ -339,3 +411,16 @@ function numberWithCommas(x) {
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+function aggregateChange() {
+    if (!$('#aggregate-toggle').is(':checked')) {
+        activeCountries.length = 0;
+        CURRENT_STATE = "USA";
+        activeCountries.push(CURRENT_STATE);
+        d3.select("#map").selectAll(".active").classed("active", false);
+        renderChartsAndLabels();
+    }
+}
+
+// function isAggeregateChecked() {
+//     "#aggregate-toggle"
+// }

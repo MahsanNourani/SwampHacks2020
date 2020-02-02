@@ -1,24 +1,27 @@
 body{overflow-x: hidden}
 
+#map-div {
+    height:416px;
+    background-color: #edf8ff;
+}
+
 #map {
+    height: 340px;
+}
+
+#gender-chart-div {
     height:400px;
     background-color: #edf8ff;
 }
 
-#gender-chart {
-    height:400px;
-    background-color: #edf8ff;
+.states path.active {
+    fill: orange;
 }
-
 /* .powderblue {
     background-color: powderblue;
 } */
 #ethnicity-chart{
     min-height: 200px;
-/*<<<<<<< HEAD*/
-/*=======*/
-    /*background-color: #edf8ff;*/
-/*>>>>>>> 6d5bb69d343263890001c56312944c6d9a8d8684*/
 }
 
 .vertical-align-center {
@@ -71,4 +74,11 @@ div.tooltip {
 .axis text {
     font-family: sans-serif;
     font-size: 15px;
+    padding-right: 2px;
+    padding-bottom: 2px;
+}
+
+input[type="checkbox"]#aggregate-toggle:checked + span {
+    border-color: blue;
+    background-color:yellow;
 }
