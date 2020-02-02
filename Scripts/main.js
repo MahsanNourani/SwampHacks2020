@@ -72,10 +72,14 @@ function startTask() {
             })
             .on("click", function (d) {
                 // window.alert("ya");
+                var disselect = false;
+                if (CURRENT_STATE == d.properties.name) {
+                    disselect = true;
+                }
                 CURRENT_STATE = d.properties.name;
                 console.log(CURRENT_STATE);
                 removeOldCharts();
-                renderChartsAndLabels();
+                renderChartsAndLabels(disselect);
                 // d3.select(this).classed("selectedState", true);
                 // if toggle button is true:
                 toggleCountry(this, d);
@@ -88,7 +92,7 @@ function startTask() {
 
 
 
-function renderChartsAndLabels() {
+function renderChartsAndLabels(isDisselected) {
     ethnicityChart();
     genderChart();
     if ($('#aggregate-toggle').is(':checked')) {
@@ -99,11 +103,19 @@ function renderChartsAndLabels() {
         d3.select('#gender-title').html("Enrollment Distribution by Gender in " + CURRENT_STATE);
         d3.select('#ethnicity-title').html("Enrollment Distribution by Ethnicity in " + CURRENT_STATE);
     }
+    if (CURRENT_STATE == 'Florida' && !isDisselected) {
+        d3.select('#stream-title').html("Enrollment Distribution by Ethnicity Years 2007-2017 in Florida");
+        streamGraph();
+    }
+    else {
+        d3.select('#stream-title').html("");
+    }
 }
 
 function removeOldCharts() {
     d3.select('#ethnicity-chart').select('svg').remove();
     d3.select('#gender-chart').select('svg').remove();
+    d3.select('#stream-chart').select('svg').remove();
     d3.select(".selectedState").classed("selectedState", false);
 }
 
@@ -341,10 +353,13 @@ function ethnicityChart() {
 	.domain(d3.range(0, raceData.length))
 	.rangeBands([65, width-100], 0.2, 0.2);
 	// .rangeBands([0, width]);
-  var colors = d3.scale.linear()
-	.domain([0, raceData.length])
-      .range(["#7692FF","#F3C98B"]);
-	// .range(['#5FBFF9', '#331832']);
+  // var colors = d3.scale.linear()
+	// .domain([0, raceData.length])
+  //     .range(["#7692FF","#F3C98B"]);
+	// // .range(['#5FBFF9', '#331832']);
+    var colors = d3.scale.linear()
+        .domain([0, raceData.length])
+        .range(["#7692FF","#F3C98B"]);
 
 
   // var x_axis = d3.svg.axis()
@@ -421,6 +436,126 @@ function aggregateChange() {
     }
 }
 
-// function isAggeregateChecked() {
-//     "#aggregate-toggle"
-// }
+function streamGraph() {
+    var margin = {top: 20, right: 80, bottom: 30, left: 50},
+        width = 520 - margin.left - margin.right,
+        height = 200 - margin.top - margin.bottom;
+
+    var parseDate = d3.time.format("%Y").parse;
+    // var domainX = ["2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017"];
+    var x = d3.time.scale()
+        // .domain(domainX)
+        // .rangeBands([10, width-10], 0.7, 0.2);
+        .range([0, width + margin.right]);
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var color = d3.scale.category20c();
+    // var colors = d3.scale.linear()
+    //     .domain([0, raceData.length])
+    //     .range(["#7692FF","#F3C98B"]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .ticks(5)
+        .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .tickFormat(d3.format("s"))
+        .orient("left");
+
+    var line = d3.svg.line()
+        .interpolate("basis")
+        .x(function(d) { return x(d.year); })
+        .y(function(d) { return y(d.count); });
+
+    var svg = d3.select("#stream-chart").append("svg")
+        .classed("bg-white mb-2 border rounded border-dark", true)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    d3.csv("./Data/Florida.csv", function(error, data) {
+        if (error) throw error;
+
+        color.domain(d3.keys(data[0])
+            .filter(function(key) { return key !== "Year"; }));
+
+        data.forEach(function(d) {
+            d.year = parseDate(d.Year);
+        });
+
+        var cities = color.domain().map(function(name) {
+            return {
+                name: name,
+                values: data.map(function(d) {
+                    return {year: d.year, count: Number(d[name])};
+                })
+            };
+        });
+
+        console.log(cities);
+        x.domain(d3.extent(data, function(d) { return d.year; }));
+
+        y.domain([
+            d3.min(cities, function(c) { return d3.min(c.values, function(v) { return v.count; }); }),
+            d3.max(cities, function(c) { return d3.max(c.values, function(v) { return v.count; }); })
+        ]);
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 6)
+            .attr("dy", ".71em")
+            .style("text-anchor", "end");
+            // .text("Cases");
+
+        var div = d3.select("body")
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        var city = svg.selectAll(".city")
+            .data(cities)
+            .enter().append("g")
+            .attr("class", "city");
+
+        city.append("path")
+            .attr("class", "line")
+            .attr("d", function(d) { return line(d.values); })
+            .style("stroke", function(d) { return color(d.name); })
+            .style("stroke-width", "2px")
+            .style("fill", "none")
+            .on ("mouseover", function (d) {
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+
+                div.text(d.name)
+                    .style("left", (d3.event.pageX + 30) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function (d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+        // city.append("text")
+        //     .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
+        //     .attr("transform", function(d) { return "translate(" + x(d.value.year) + "," + y(d.value.count) + ")"; })
+        //     .attr("x", 3)
+        //     .attr("dy", ".35em")
+        //     .text(function(d) { return d.name; });
+    });
+}
